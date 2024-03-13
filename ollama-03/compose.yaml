@@ -1,0 +1,33 @@
+services:
+  # https://cheshirecat.ai/local-models-with-ollama/
+  ollama-service:
+    profiles: [fetch]
+    image: ollama/ollama:0.1.28
+    volumes:
+      - ./ollama:/root/.ollama
+    ports:
+      - 11434:11434
+
+  download-deepseek-coder-llm:
+    profiles: [fetch]
+    container_name: deepseek
+    image: curlimages/curl:8.6.0
+    entrypoint: ["curl", "ollama-service:11434/api/pull", "-d", '{"name": "deepseek-coder"}']
+    depends_on:
+      ollama-service:
+        condition: service_started
+
+  ollama-build:
+    image: ollama-deepseek-coder
+    profiles: [build]
+    entrypoint: ["ollama", "--version"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+  ollama-server:
+    profiles: [server]
+    image: ollama-deepseek-coder
+    ports:
+      - 11434:11434
+
